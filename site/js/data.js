@@ -10,7 +10,7 @@ import { getHiddenSources } from './store.js';
 const memo = new Map();        // file name -> Promise<data>
 const stories = new Map();     // story id -> story
 let preferCache = true;        // only during the first load after opening
-let knownGenerated = '';       // timestamp of the data on screen
+const generatedOf = new Map(); // file name -> timestamp of the copy we're showing
 const updateListeners = new Set();
 
 function fileUrl(name) {
@@ -38,9 +38,28 @@ async function fromNetwork(name) {
   return response.json();
 }
 
-function remember(data) {
+/** Timestamp of the oldest data file currently shown ('' if none loaded yet). */
+function oldestShown() {
+  let oldest = '';
+  for (const stamp of generatedOf.values()) {
+    if (stamp && (!oldest || stamp < oldest)) oldest = stamp;
+  }
+  return oldest;
+}
+
+function announce(stamp) {
+  updateListeners.forEach((fn) => fn(stamp));
+}
+
+function remember(name, data) {
   if (!data) return data;
-  if (data.generated && data.generated > knownGenerated) knownGenerated = data.generated;
+  if (data.generated) {
+    // A file just arrived that is newer than something already on screen
+    // (e.g. you opened Status after reading Top stories): offer a refresh.
+    const oldest = oldestShown();
+    generatedOf.set(name, data.generated);
+    if (oldest && data.generated > oldest) announce(data.generated);
+  }
   for (const story of Array.isArray(data.stories) ? data.stories : []) {
     const existing = stories.get(story.id);
     if (!existing || (story.updated || '') >= (existing.updated || '')) stories.set(story.id, story);
@@ -55,19 +74,19 @@ async function load(name) {
       fromNetwork(name)
         .then((fresh) => {
           if (fresh.generated && cached.generated && fresh.generated > cached.generated) {
-            updateListeners.forEach((fn) => fn(fresh.generated));
+            announce(fresh.generated);
           }
         })
         .catch(() => {});
-      return remember(cached);
+      return remember(name, cached);
     }
   }
   try {
-    return remember(await fromNetwork(name));
+    return remember(name, await fromNetwork(name));
   } catch (err) {
     // Offline and not cached by the service worker yet? Try the cache anyway.
     const cached = await fromCache(name);
-    if (cached) return remember(cached);
+    if (cached) return remember(name, cached);
     throw err;
   }
 }
@@ -107,6 +126,7 @@ export async function findStory(id) {
 export function resetData() {
   memo.clear();
   stories.clear();
+  generatedOf.clear();
   preferCache = false;
 }
 
@@ -115,7 +135,7 @@ export function endBootPhase() {
 }
 
 export function dataTimestamp() {
-  return knownGenerated;
+  return oldestShown();
 }
 
 export function onUpdateAvailable(fn) {
@@ -130,7 +150,8 @@ export async function checkForUpdate() {
     });
     if (!response.ok) return false;
     const version = await response.json();
-    return Boolean(version.generated && knownGenerated && version.generated > knownGenerated);
+    const shown = oldestShown();
+    return Boolean(version.generated && shown && version.generated > shown);
   } catch (err) {
     return false;
   }
