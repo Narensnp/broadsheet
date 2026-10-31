@@ -32,11 +32,12 @@ from parse import parse_iso
 from textutil import jaccard, normalize_title, short_hash, title_tokens
 
 # --- Tuning knobs -----------------------------------------------------------
-PAIR_THRESHOLD = 0.30       # how similar two articles must be to link them
-GROUP_THRESHOLD = 0.22      # how similar two whole groups must be to merge
+PAIR_THRESHOLD = 0.24       # how similar two articles must be to link them (tuned on real news)
+GROUP_THRESHOLD = 0.20      # how similar two whole groups must be to merge
 MAX_SPAN = timedelta(hours=48)
-HALF_LIFE_HOURS = 10.0
+HALF_LIFE_HOURS = 7.0
 CHUNK = 800                 # rows compared at once (keeps memory small)
+NGRAMS = (1, 1)             # single words; two-word phrases made real headlines look less alike
 
 NEWS_STOP_WORDS = {
     "says", "said", "say", "new", "news", "live", "latest", "update", "updates",
@@ -142,7 +143,7 @@ def cluster_articles(articles: list[dict], source_names: list[str]):
     texts = [f"{a['title']}. {a['title']}. {a.get('snippet', '')}" for a in articles]
     vectorizer = TfidfVectorizer(
         stop_words=stop_words,
-        ngram_range=(1, 2),
+        ngram_range=NGRAMS,
         sublinear_tf=True,
         strip_accents="unicode",
         lowercase=True,

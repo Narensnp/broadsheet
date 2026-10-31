@@ -55,6 +55,20 @@ GENERIC_PHRASES = {
     "white house", "state", "states", "country", "countries", "city", "union",
 }
 
+# Single words that are too vague to be a topic on their own (they're fine inside
+# a longer phrase such as "North Korea" or "United Nations").
+VAGUE_WORDS = {
+    "west", "western", "east", "eastern", "north", "northern", "south", "southern",
+    "united", "national", "international", "federal", "central", "american",
+    "americans", "british", "french", "german", "chinese", "russian", "russians",
+    "european", "europeans", "asian", "african", "indian", "japanese", "korean",
+    "israeli", "israelis", "ukrainian", "ukrainians", "iranian", "iranians",
+    "palestinian", "palestinians", "democrats", "republicans", "democrat",
+    "republican", "january", "february", "march", "april", "june", "july",
+    "august", "september", "october", "november", "december",
+}
+SINGLE_WORD_MIN_LIFT = 2.0   # single words must rise faster than phrases to count
+
 # Words inside outlet names that are also ordinary news words or places, so
 # they must NOT be blocked just because an outlet's name contains them.
 KEEP_WORDS = {
@@ -182,6 +196,8 @@ def find_trending(
         expected = baseline * scale
         lift = (recent + 1.0) / (expected + 1.0)
         if lift < MIN_LIFT:
+            continue
+        if " " not in key and (key in VAGUE_WORDS or lift < SINGLE_WORD_MIN_LIFT):
             continue
         # Phrases that appear in headlines (not only in snippets) make better topics.
         in_titles = title_hits[key] / recent
