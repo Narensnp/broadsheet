@@ -1,0 +1,23 @@
+{
+  "name": "Broadsheet",
+  "short_name": "Broadsheet",
+  "description": "World news from around 50 outlets, grouped by story so you can compare coverage.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f4f1",
+  "theme_color": "#f3f4f1",
+  "categories": ["news"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Today in 60 seconds", "short_name": "60 seconds", "url": "./#/brief", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Saved stories", "short_name": "Saved", "url": "./#/saved", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,7 @@
+# Exact versions so every run behaves the same (tested with Python 3.12).
+feedparser==6.0.14
+PyYAML==6.0.3
+requests==2.34.2
+scikit-learn==1.9.1
+numpy==2.5.4
+scipy==1.18.1
